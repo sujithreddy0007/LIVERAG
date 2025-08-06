@@ -7,9 +7,26 @@ import streamlit as st
 from app.rag_pipeline import query_gemini_rag, query_gemini_general
 from app.utils.pdf_loader import extract_text_from_pdf
 from app.utils.url_loader import extract_text_from_url
+from PIL import Image
 
+logo = Image.open("logo.png")
+st.image(logo, width=150)  # You can change width as needed
 # Page config
 st.set_page_config(page_title="LiveRAG Q&A", layout="wide")
+
+# 🔹 Intro Header (add this before anything else in run_app)
+st.title("🧠 LiveRAG: Smart Q&A Assistant")
+st.markdown("""
+Welcome to **LiveRAG**, your personal AI assistant for fast and intelligent Q&A!
+
+- 📎 Ask questions from PDFs or URLs using Gemini Flash 2.0
+- 🧾 Chat with documents and web pages instantly
+- 💬 Switch to general chat mode anytime
+- 🚀 Designed for fast, contextual, and relevant answers
+
+Start by selecting a mode from the sidebar!
+""")
+st.markdown("---")
 
 # Session state
 if "messages" not in st.session_state:
@@ -23,6 +40,10 @@ if "mode" not in st.session_state:
 
 # Display chat history
 def display_chat():
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = []
+    if "user_input" not in st.session_state:
+        st.session_state["user_input"] = ""
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])

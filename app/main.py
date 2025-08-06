@@ -4,62 +4,83 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import streamlit as st
-from app.rag_pipeline import query_gemini
+from app.rag_pipeline import query_gemini_rag, query_gemini_general
 from app.utils.pdf_loader import extract_text_from_pdf
 from app.utils.url_loader import extract_text_from_url
 
 # Page config
 st.set_page_config(page_title="LiveRAG Q&A", layout="wide")
 
-# Chat message formatter
-def display_chat(question, answer):
-    with st.chat_message("user"):
-        st.markdown(f"**You:** {question}")
-    with st.chat_message("ai"):
-        st.markdown(f"**Gemini:** {answer}")
+# Session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# App function
+if "context" not in st.session_state:
+    st.session_state.context = ""
+
+if "mode" not in st.session_state:
+    st.session_state.mode = "RAG"
+
+# Display chat history
+def display_chat():
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+# App entry
 def run_app():
     st.markdown(
-        "<h2 style='text-align:center;'>📄 LiveRAG: PDF/URL Q&A powered by Gemini Flash</h2><hr>",
+        "<h2 style='text-align:center;'>🤖 LiveRAG: PDF / URL / Chat Q&A (Gemini Flash)</h2><hr>",
         unsafe_allow_html=True
     )
 
     with st.sidebar:
-        st.header("Input Type")
-        input_type = st.radio("Choose input type:", ["PDF", "URL"])
+        st.header("🛠️ Mode Selection")
+        mode = st.radio("Choose a mode:", ["RAG (PDF/URL)", "General Chat"])
+        st.session_state.mode = "RAG" if mode == "RAG (PDF/URL)" else "Chat"
 
-        context = ""
-        if input_type == "PDF":
-            uploaded_file = st.file_uploader("📎 Upload your PDF file", type="pdf")
-            if uploaded_file:
-                with st.spinner("Extracting text from PDF..."):
-                    context = extract_text_from_pdf(uploaded_file)
-                    st.success("PDF text extracted ✅")
+        if st.button("🔄 Reset Chat"):
+            st.session_state.messages = []
+            st.session_state.context = ""
+            st.experimental_rerun()
 
-        elif input_type == "URL":
-            url = st.text_input("🔗 Enter a URL")
-            if url:
-                with st.spinner("Extracting text from URL..."):
-                    context = extract_text_from_url(url)
-                    st.success("URL content extracted ✅")
+        if st.session_state.mode == "RAG":
+            input_type = st.radio("📥 Input Type", ["PDF", "URL"])
+            if input_type == "PDF":
+                uploaded_file = st.file_uploader("📎 Upload PDF", type="pdf")
+                if uploaded_file:
+                    with st.spinner("Extracting text from PDF..."):
+                        st.session_state.context = extract_text_from_pdf(uploaded_file)
+                        st.success("✅ PDF text extracted")
 
-    # Main Q&A UI
-    if context:
-        st.markdown("<br>", unsafe_allow_html=True)
-        user_question = st.chat_input("Ask a question...")
+            elif input_type == "URL":
+                url = st.text_input("🔗 Enter a URL")
+                if url:
+                    with st.spinner("Extracting text from URL..."):
+                        st.session_state.context = extract_text_from_url(url)
+                        st.success("✅ URL content extracted")
 
-        if user_question:
-            with st.spinner("Generating answer..."):
-                try:
-                    result = query_gemini(context, user_question)
-                    display_chat(user_question, result)
-                except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
+    # Show chat
+    display_chat()
 
-    else:
-        st.info("Please upload a PDF or enter a URL to get started.")
+    # Chat logic
+    user_input = st.chat_input("Type your message...")
+    if user_input:
+        st.chat_message("user").markdown(user_input)
+        st.session_state.messages.append({"role": "user", "content": user_input})
 
-# # Run app
-# if __name__ == "__main__":
-#     run_app()
+        with st.spinner("Thinking..."):
+            try:
+                if st.session_state.mode == "RAG":
+                    if not st.session_state.context:
+                        st.warning("Please provide a PDF or URL first.")
+                        return
+                    answer = query_gemini_rag(st.session_state.context, user_input)
+                else:
+                    answer = query_gemini_general(user_input)
+
+                st.chat_message("assistant").markdown(answer)
+                st.session_state.messages.append({"role": "assistant", "content": answer})
+
+            except Exception as e:
+                st.error(f"❌ Error: {str(e)}")

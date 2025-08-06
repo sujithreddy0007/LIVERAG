@@ -10,13 +10,13 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 model = genai.GenerativeModel("gemini-2.0-flash")
 
-def process_pdf(file):
-    return extract_text_from_pdf(file)
-
-def process_url(url):
-    return extract_text_from_url(url)
-
-def query_gemini(context, question):
+# For PDF/URL context-based RAG
+def query_gemini_rag(context, question):
     prompt = f"""Based on the following content, answer the question below:\n\nCONTENT:\n{context[:6000]}\n\nQUESTION:\n{question}"""
     response = model.generate_content(prompt)
+    return response.text
+
+# For general chat
+def query_gemini_general(message):
+    response = model.generate_content(message)
     return response.text

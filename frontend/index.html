@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LiveRAG Q&A</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script defer src="script.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="max-w-3xl mx-auto mt-10">
+    <h1 class="text-2xl font-bold text-center mb-6">📄 LiveRAG: PDF/URL Q&A</h1>
+    
+    <textarea id="context" class="w-full p-3 border rounded mb-4 h-32" placeholder="Paste PDF/URL content here..."></textarea>
+    <div class="flex mb-4">
+      <input id="question" type="text" class="flex-1 p-2 border rounded-l" placeholder="Ask your question..." />
+      <button onclick="sendMessage()" class="bg-blue-500 text-white px-4 rounded-r">Send</button>
+    </div>
+
+    <div id="chat-box" class="bg-white p-4 rounded shadow h-96 overflow-y-scroll space-y-4"></div>
+  </div>
+</body>
+</html>

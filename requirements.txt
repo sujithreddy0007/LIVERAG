@@ -1,0 +1,9 @@
+streamlit
+google-generativeai
+beautifulsoup4
+requests
+PyMuPDF
+chromadb
+langchain
+sentence-transformers
+python-dotenv
